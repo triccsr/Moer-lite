@@ -1,4 +1,5 @@
 #include "AABB.h"
+#include "nlohmann/detail/input/lexer.hpp"
 
 Point3f minP(const Point3f &p1, const Point3f &p2) {
   return Point3f{std::min(p1[0], p2[0]), std::min(p1[1], p2[1]),
@@ -41,7 +42,25 @@ bool AABB::Overlap(const AABB &other) const {
 
 bool AABB::RayIntersect(const Ray &ray, float *tMin, float *tMax) const {
   //* todo 实现AABB与光线求交
-  return false;
+  float tNear = ray.tNear, tFar = ray.tFar;
+  for (int d = 0; d < 3; ++d) {
+    float invD = 1.f / ray.direction[d];
+    float t0 = (pMin[d] - ray.origin[d]) * invD,
+          t1 = (pMax[d] - ray.origin[d]) * invD;
+    if (t0 > t1)
+      std::swap(t0, t1);
+    tNear = std::max(tNear, t0);
+    tFar = std::min(tFar, t1);
+    if (tNear > tFar)
+      return false;
+  }
+  if (tMin) {
+    *tMin = tNear;
+  }
+  if (tMax) {
+    *tMax = tFar;
+  }
+  return true;
 }
 
 Point3f AABB::Center() const {
